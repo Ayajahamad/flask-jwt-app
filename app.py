@@ -1,37 +1,50 @@
-# app.py
 from flask import Flask, request, jsonify
-from flask_jwt_extended import JWTManager, create_access_token, set_access_cookies, unset_jwt_cookies, jwt_required, get_jwt_identity
+from flask_jwt_extended import (
+    JWTManager, jwt_required, create_access_token,
+    get_jwt_identity, set_access_cookies, unset_jwt_cookies
+)
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_cors import CORS
 from datetime import timedelta
 
 app = Flask(__name__)
 
-# Enable CORS for your subdomains
-CORS(app, supports_credentials=True, 
+# Enable CORS for specified subdomains (add full URLs)
+CORS(app, supports_credentials=True,
      resources={r"/*": {"origins": [
-         "http://ayaj.infy.uk/app1", 
+         "http://ayaj.infy.uk/app1",
          "http://ayaj.infy.uk/app2"
      ]}})
 
-# JWT Config for cookies
+# JWT Cookie Configuration
 app.config['JWT_SECRET_KEY'] = 'your_secret_key'
 app.config["JWT_TOKEN_LOCATION"] = ["cookies"]
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=1)
 app.config["JWT_COOKIE_NAME"] = "access_token_cookie"
-app.config["JWT_COOKIE_SAMESITE"] = "Lax"  # Allow cookies to be shared across sites
-app.config["JWT_COOKIE_SECURE"] = False     # Set to True in production when using HTTPS
-app.config["JWT_COOKIE_DOMAIN"] = ".ayaj.infy.uk"  # allows all subdomains
-app.config["JWT_COOKIE_CSRF_PROTECT"] = False  # Disable for simplicity (or enable with frontend CSRF token support)
+app.config["JWT_COOKIE_SAMESITE"] = "Lax"  # For cross-origin cookie sharing
+app.config["JWT_COOKIE_SECURE"] = False    # Use True with HTTPS in production
+app.config["JWT_COOKIE_DOMAIN"] = ".ayaj.infy.uk"  # Enables cookie sharing across subdomains
+app.config["JWT_COOKIE_CSRF_PROTECT"] = False      # Disable CSRF for simplicity (enable if needed)
 
 jwt = JWTManager(app)
 
-# Dummy in-memory user store
+# In-memory user store
 users = {}
 
 @app.route('/', methods=['GET'])
 def home():
     return jsonify({"msg": "Home Page Access"})
+
+@app.route('/register', methods=['POST'])
+def register():
+    username = request.json.get('username')
+    password = request.json.get('password')
+
+    if username in users:
+        return jsonify({"msg": "User already exists"}), 400
+
+    users[username] = generate_password_hash(password)
+    return jsonify({"msg": "User registered successfully"}), 201
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -46,7 +59,6 @@ def login():
     set_access_cookies(response, access_token)
     return response, 200
 
-# Example Protected Route
 @app.route('/protected', methods=['GET'])
 @jwt_required()
 def protected():
