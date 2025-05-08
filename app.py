@@ -12,6 +12,7 @@ app = Flask(__name__)
 # Enable CORS for specified subdomains (add full URLs)
 CORS(app, supports_credentials=True,
      resources={r"/*": {"origins": [
+         "http://ayaj.infy.uk",
          "http://ayaj.infy.uk/app1",
          "http://ayaj.infy.uk/app2"
      ]}})
