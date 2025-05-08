@@ -9,27 +9,22 @@ from datetime import timedelta
 
 app = Flask(__name__)
 
-# Enable CORS for specified subdomains (add full URLs)
-CORS(app, supports_credentials=True,
-     resources={r"/*": {"origins": [
-         "http://ayaj.infy.uk",
-         "http://ayaj.infy.uk/app1",
-         "http://ayaj.infy.uk/app2"
-     ]}})
+# ✅ Correct CORS setup with supports_credentials + allowed origin
+CORS(app, supports_credentials=True, resources={r"/*": {"origins": ["http://ayaj.infy.uk"]}})
 
-# JWT Cookie Configuration
+# ✅ JWT Configuration for cookies
 app.config['JWT_SECRET_KEY'] = 'your_secret_key'
 app.config["JWT_TOKEN_LOCATION"] = ["cookies"]
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=1)
 app.config["JWT_COOKIE_NAME"] = "access_token_cookie"
-app.config["JWT_COOKIE_SAMESITE"] = "Lax"  # For cross-origin cookie sharing
-app.config["JWT_COOKIE_SECURE"] = False    # Use True with HTTPS in production
-app.config["JWT_COOKIE_DOMAIN"] = ".ayaj.infy.uk"  # Enables cookie sharing across subdomains
-app.config["JWT_COOKIE_CSRF_PROTECT"] = False      # Disable CSRF for simplicity (enable if needed)
+app.config["JWT_COOKIE_SAMESITE"] = "Lax"  # Important for cross-origin
+app.config["JWT_COOKIE_SECURE"] = False     # Set True when using HTTPS
+app.config["JWT_COOKIE_DOMAIN"] = "ayaj.infy.uk"  # ⚠️ No leading dot
+app.config["JWT_COOKIE_CSRF_PROTECT"] = False     # Can keep False for testing
 
 jwt = JWTManager(app)
 
-# In-memory user store
+# Dummy in-memory user store
 users = {}
 
 @app.route('/', methods=['GET'])
@@ -73,4 +68,4 @@ def logout():
     return response, 200
 
 if __name__ == '__main__':
-    app.run(debug=False, host='0.0.0.0', port=5002)
+    app.run(debug=True, host='0.0.0.0', port=5002)
